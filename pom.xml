@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.weaviate</groupId>
+    <artifactId>kafka-connect-weaviate</artifactId>
+    <version>${revision}</version>
+
+    <properties>
+        <revision>1.0.0-SNAPSHOT</revision>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.release>11</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <kafka.version>3.9.0</kafka.version>
+        <kafka-connect-maven-plugin.version>0.12.0</kafka-connect-maven-plugin.version>
+        <weaviate.version>5.0.1</weaviate.version>
+        <junit-jupiter-engine.version>5.9.1</junit-jupiter-engine.version>
+        <commons-io.version>2.18.0</commons-io.version>
+        <maven-assembly-plugin.version>3.7.1</maven-assembly-plugin.version>
+        <license.header>com/mycila/maven/plugin/license/templates/APACHE-2-noemail.txt</license.header>
+        <plugin.version.license>4.6</plugin.version.license>
+        <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
+        <grpc.version>1.68.2</grpc.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>connect-runtime</artifactId>
+            <version>${kafka.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.weaviate</groupId>
+            <artifactId>client</artifactId>
+            <version>${weaviate.version}</version>
+        </dependency>
+
+        <!--
+        Fixing GRPC ClassLoader injection issues
+        GRPC is lazily loading classes, kafka-serde-tools include both grpclb and googleapis that is
+        not included in weaviate-client GRPC implementation.
+        Class candidates are returned, but can not be loaded in the plugin classloader.
+        !-->
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-grpclb</artifactId>
+            <version>${grpc.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-googleapis</artifactId>
+            <version>${grpc.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-all</artifactId>
+            <version>${grpc.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit-jupiter-engine.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>${commons-io.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- LICENSE PLUGIN -->
+            <plugin>
+                <groupId>com.mycila</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>${plugin.version.license}</version>
+                <configuration>
+                    <header>${license.header}</header>
+                    <properties>
+                        <owner>Weaviate</owner>
+                        <year>2025</year>
+                    </properties>
+                    <includes>
+                        <include>**/*.java</include>
+                    </includes>
+                    <mapping>
+                        <java>SLASHSTAR_STYLE</java>
+                    </mapping>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>add-license</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>format</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Assembly plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>${maven-assembly-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <descriptorRefs>
+                                <descriptorRef>jar-with-dependencies</descriptorRef>
+                            </descriptorRefs>
+                            <finalName>${project.artifactId}-${project.version}-uber</finalName>
+                            <appendAssemblyId>false</appendAssemblyId>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Kafka Connect plugin -->
+            <plugin>
+                <groupId>io.confluent</groupId>
+                <version>${kafka-connect-maven-plugin.version}</version>
+                <artifactId>kafka-connect-maven-plugin</artifactId>
+                <configuration>
+                    <title>Kafka Connect Weaviate</title>
+                    <documentationUrl>https://weaviate.io/developers/weaviate</documentationUrl>
+                    <description>
+                        The Weaviate connector allows moving data from Kafka to Weaviate. It writes data from a
+                        topic in Kafka to a collection in Weaviate.
+                        Weaviate uses state-of-the-art machine learning (ML) models to turn your data - text,
+                        images, and more - into a searchable vector database.
+                    </description>
+                    <logo>logos/weaviate.jpg</logo>
+
+                    <supportProviderName>Weaviate</supportProviderName>
+                    <supportSummary>Community support</supportSummary>
+                    <supportUrl>https://github.com/weaviate/kafka-connect-weaviate</supportUrl>
+                    <supportLogo>logos/weaviate.jpg</supportLogo>
+                    <ownerUsername>Weaviate</ownerUsername>
+                    <ownerType>organization</ownerType>
+                    <ownerName>Weaviate</ownerName>
+                    <ownerUrl>https://weaviate.io/</ownerUrl>
+                    <ownerLogo>logos/weaviate.jpg</ownerLogo>
+
+                    <dockerNamespace>confluentinc</dockerNamespace>
+                    <dockerName>cp-kafka-connect</dockerName>
+                    <dockerTag>${project.version}</dockerTag>
+
+                    <componentTypes>
+                        <componentType>sink</componentType>
+                    </componentTypes>
+
+                    <tags>
+                        <tag>Weaviate</tag>
+                        <tag>vector</tag>
+                        <tag>search</tag>
+                        <tag>analytics</tag>
+                        <tag>rag</tag>
+                        <tag>ai</tag>
+                        <tag>ml</tag>
+                    </tags>
+
+                    <requirements>
+                        <requirement>Weaviate 1.28.x or greater</requirement>
+                    </requirements>
+
+                    <deliveryGuarantee>
+                        <deliveryGuarantee>atLeastOnce</deliveryGuarantee>
+                    </deliveryGuarantee>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>kafka-connect</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Compiler plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven-compiler-plugin.version}</version>
+                <inherited>true</inherited>
+                <configuration>
+                    <compilerArgs>
+                        <arg>-Xlint:all,-serial,-processing</arg>
+                        <arg>-Werror</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+        </plugins>
+
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+    </build>
+</project>

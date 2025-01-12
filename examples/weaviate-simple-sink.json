@@ -1,0 +1,9 @@
+{
+  "connector.class": "io.weaviate.connector.WeaviateSinkConnector",
+  "topics": "test",
+  "weaviate.connection.url": "http://weaviate:8080",
+  "weaviate.grpc.url": "weaviate:50051",
+  "collection.mapping": "weaviate_${topic}",
+  "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+  "value.converter.schemas.enable": false
+}

@@ -1,0 +1,14 @@
+{
+  "connector.class": "io.weaviate.connector.WeaviateSinkConnector",
+  "topics": "test",
+  "weaviate.connection.url": "$WEAVIATE_REST_URL",
+  "weaviate.grpc.url": "$WEAVIATE_GRPC_URL",
+  "weaviate.grpc.secured": true,
+  "weaviate.auth.scheme": "API_KEY",
+  "weaviate.api.key": "$WEAVIATE_API_KEY",
+  "collection.mapping": "Weaviate_test",
+  "document.id.strategy": "io.weaviate.connector.idstrategy.FieldIdStrategy",
+  "document.id.field.name": "id",
+  "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+  "value.converter.schemas.enable": false
+}

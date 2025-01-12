@@ -1,0 +1,12 @@
+{
+  "text": "hello world",
+  "int": 123,
+  "float": 1.23,
+  "date": "1736352917",
+  "boolean": true,
+  "bytes": "SGVsbG8gV29ybGQK",
+  "vector": [
+    1.0,
+    2.0
+  ]
+}
