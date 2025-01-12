@@ -1,0 +1,35 @@
+{
+  "schema": {
+    "type": "struct",
+    "fields": [
+      {
+        "type": "string",
+        "optional": false,
+        "field": "text"
+      },
+      {
+        "type": "int64",
+        "optional": false,
+        "field": "int"
+      },
+      {
+        "type": "boolean",
+        "optional": false,
+        "field": "boolean"
+      },
+      {
+        "type": "double",
+        "optional": false,
+        "field": "float"
+      }
+    ]
+  },
+  "payload": {
+    "text": "hello world",
+    "int": 123,
+    "float": 1.23,
+    "date": "1736352917",
+    "boolean": true,
+    "bytes": "SGVsbG8gV29ybGQK"
+  }
+}
