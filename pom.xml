@@ -18,6 +18,11 @@
         <weaviate.version>5.0.1</weaviate.version>
         <junit-jupiter-engine.version>5.9.1</junit-jupiter-engine.version>
         <commons-io.version>2.18.0</commons-io.version>
+        <maven-assembly-plugin.version>3.7.1</maven-assembly-plugin.version>
+        <license.header>com/mycila/maven/plugin/license/templates/APACHE-2.txt</license.header>
+        <plugin.version.license>4.3</plugin.version.license>
+        <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
+        <grpc.version>1.68.2</grpc.version>
     </properties>
 
     <dependencies>
@@ -31,6 +36,23 @@
             <groupId>io.weaviate</groupId>
             <artifactId>client</artifactId>
             <version>${weaviate.version}</version>
+        </dependency>
+
+        <!--
+        Fixing GRPC ClassLoader injection issues
+        GRPC is lazily loading classes, kafka-serde-tools include both grpclb and googleapis that is
+        not included in weaviate-client GRPC implementation.
+        Class candidates are returned, but can not be loaded in the plugin classloader.
+        !-->
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-grpclb</artifactId>
+            <version>${grpc.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-googleapis</artifactId>
+            <version>${grpc.version}</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -49,6 +71,60 @@
 
     <build>
         <plugins>
+            <!-- LICENSE PLUGIN -->
+            <plugin>
+                <groupId>com.mycila</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>${plugin.version.license}</version>
+                <configuration>
+                    <header>${license.header}</header>
+                    <properties>
+                        <owner>Damien Gasparina</owner>
+                        <email>damien@gasparina.cloud</email>
+                        <year>2025</year>
+                    </properties>
+                    <includes>
+                        <include>**/*.java</include>
+                    </includes>
+                    <mapping>
+                        <java>SLASHSTAR_STYLE</java>
+                    </mapping>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>add-license</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>format</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Assembly plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>${maven-assembly-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <descriptorRefs>
+                                <descriptorRef>jar-with-dependencies</descriptorRef>
+                            </descriptorRefs>
+                            <finalName>${project.artifactId}-${project.version}-uber</finalName>
+                            <appendAssemblyId>false</appendAssemblyId>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Kafka Connect plugin -->
             <plugin>
                 <groupId>io.confluent</groupId>
                 <version>${kafka-connect-maven-plugin.version}</version>
@@ -108,9 +184,12 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- Compiler plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven-compiler-plugin.version}</version>
                 <inherited>true</inherited>
                 <configuration>
                     <compilerArgs>

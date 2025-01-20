@@ -1,5 +1,21 @@
+/*
+ * Copyright © 2025 Damien Gasparina (damien@gasparina.cloud)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.weaviate.connector;
 
+import io.grpc.NameResolverRegistry;
 import io.weaviate.client.Config;
 import io.weaviate.client.WeaviateAuthClient;
 import io.weaviate.client.WeaviateClient;
@@ -47,6 +63,9 @@ public class WeaviateSinkTask extends SinkTask {
         } catch (Exception e) {
             throw new RuntimeException("Can not instantiate VectorStrategy class", e);
         }
+
+        NameResolverRegistry defaultRegistry = NameResolverRegistry.getDefaultRegistry();
+        defaultRegistry.getDefaultScheme();
     }
 
     private void buildWeaviateClient(WeaviateSinkConfig config) {
@@ -74,10 +93,10 @@ public class WeaviateSinkTask extends SinkTask {
         String scheme = config.getConnectionUrl().split("://")[0];
         String hostAndPort = config.getConnectionUrl().split("://")[1];
         Config weaviateConfig = new Config(scheme, hostAndPort);
-        //if (config.getGrpcUrl() != null && !config.getGrpcUrl().isEmpty()) {
-        //    weaviateConfig.setGRPCHost(config.getGrpcUrl());
-        //    weaviateConfig.setGRPCSecured(config.getGrpcSecured());
-        //}
+        if (config.getGrpcUrl() != null && !config.getGrpcUrl().isEmpty()) {
+            weaviateConfig.setGRPCHost(config.getGrpcUrl());
+            weaviateConfig.setGRPCSecured(config.getGrpcSecured());
+        }
         return weaviateConfig;
     }
 
