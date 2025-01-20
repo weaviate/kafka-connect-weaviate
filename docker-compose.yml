@@ -39,7 +39,7 @@ services:
       CONNECT_PLUGIN_PATH: "/etc/kafka-connect/plugins"
       KAFKA_OPTS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
     volumes:
-      - ./target/components/packages/Dabz-kafka-connect-weaviate-1.0-SNAPSHOT:/etc/kafka-connect/plugins
+      - ./target/components/packages/:/etc/kafka-connect/plugins
 
   weaviate:
     command:

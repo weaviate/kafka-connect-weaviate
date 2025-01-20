@@ -15,22 +15,32 @@
  */
 package io.weaviate.connector.idstrategy;
 
+import io.weaviate.connector.WeaviateSinkConfig;
 import org.apache.kafka.connect.sink.SinkRecord;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.UUID;
 
-public class KafkaIdStrategy implements IDStrategy {
-    public KafkaIdStrategy() {
+public class FieldIdStrategy implements IDStrategy {
+    private String fieldName;
+
+    public FieldIdStrategy() {
+    }
+
+    @Override
+    public void configure(WeaviateSinkConfig config) {
+        fieldName = config.getDocumentIdFieldName();
     }
 
     @Override
     public String getDocumentId(SinkRecord record, Map<String, Object> valueProperties) {
-        if (record.key() instanceof String) {
-            return UUID.nameUUIDFromBytes(record.key().toString().getBytes(StandardCharsets.UTF_8)).toString();
+        try {
+            String id = String.valueOf(valueProperties.get(fieldName));
+            valueProperties.remove(fieldName);
+            return UUID.nameUUIDFromBytes(id.getBytes(StandardCharsets.UTF_8)).toString();
+        } catch (Exception e) {
+            throw new RuntimeException("Cannot get document id from message", e);
         }
-
-        return String.valueOf(record.key());
     }
 }

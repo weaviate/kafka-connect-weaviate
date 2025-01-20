@@ -36,6 +36,7 @@ public final class WeaviateSinkConfig extends AbstractConfig {
     private final Class<?> documentIdStrategy;
     private final Class<?> vectorStrategy;
     private final String vectorFieldName;
+    private final String documentIdFieldName;
 
     public enum AuthMechanism {
         NONE,
@@ -77,6 +78,10 @@ public final class WeaviateSinkConfig extends AbstractConfig {
     private static final String DOCUMENT_ID_STRATEGY_DOC = "Java class returning the document ID for each record";
     private static final Class<? extends IDStrategy> DOCUMENT_ID_STRATEGY_DEFAULT = io.weaviate.connector.idstrategy.NoIdStrategy.class;
 
+    public static final String DOCUMENT_ID_FIELD_CONFIG = "document.id.field.name";
+    private static final String DOCUMENT_ID_FIELD_DOC = "Field name containing the ID in Kafka";
+    private static final String DOCUMENT_ID_FIELD_DEFAULT = "id";
+
     public static final String VECTOR_STRATEGY_CONFIG = "vector.strategy";
     private static final String VECTOR_STRATEGY_DOC = "Java class returning the document embedding for each record";
     private static final Class<? extends VectorStrategy> VECTOR_STRATEGY_DEFAULT = io.weaviate.connector.vectorstrategy.NoVectorStrategy.class;
@@ -94,9 +99,10 @@ public final class WeaviateSinkConfig extends AbstractConfig {
             .define(OIDC_CLIENT_SECRET_CONFIG, ConfigDef.Type.STRING, null, ConfigDef.Importance.HIGH, OIDC_CLIENT_SECRET_DOC)
             .define(OIDC_SCOPES_CONFIG, ConfigDef.Type.LIST, OIDC_SCOPES_DEFAULT, ConfigDef.Importance.HIGH, OIDC_SCOPES_DOC)
             .define(COLLECTION_MAPPING_CONFIG, ConfigDef.Type.STRING, COLLECTION_MAPPING_DEFAULT, ConfigDef.Importance.HIGH, COLLECTION_MAPPING_DOC)
-            .define(DOCUMENT_ID_STRATEGY_CONFIG, ConfigDef.Type.CLASS, DOCUMENT_ID_STRATEGY_DEFAULT, ConfigDef.Importance.HIGH, DOCUMENT_ID_STRATEGY_DOC)
-            .define(VECTOR_STRATEGY_CONFIG, ConfigDef.Type.CLASS, VECTOR_STRATEGY_DEFAULT, ConfigDef.Importance.HIGH, VECTOR_STRATEGY_DOC)
-            .define(VECTOR_FIELD_CONFIG, ConfigDef.Type.STRING, VECTOR_FIELD_DEFAULT, ConfigDef.Importance.HIGH, VECTOR_FIELD_DOC);
+            .define(DOCUMENT_ID_STRATEGY_CONFIG, ConfigDef.Type.CLASS, DOCUMENT_ID_STRATEGY_DEFAULT, ConfigDef.Importance.MEDIUM, DOCUMENT_ID_STRATEGY_DOC)
+            .define(DOCUMENT_ID_FIELD_CONFIG, ConfigDef.Type.STRING, DOCUMENT_ID_FIELD_DEFAULT, ConfigDef.Importance.MEDIUM, DOCUMENT_ID_FIELD_DOC)
+            .define(VECTOR_STRATEGY_CONFIG, ConfigDef.Type.CLASS, VECTOR_STRATEGY_DEFAULT, ConfigDef.Importance.MEDIUM, VECTOR_STRATEGY_DOC)
+            .define(VECTOR_FIELD_CONFIG, ConfigDef.Type.STRING, VECTOR_FIELD_DEFAULT, ConfigDef.Importance.MEDIUM, VECTOR_FIELD_DOC);
 
     public WeaviateSinkConfig(ConfigDef definition, Map<?, ?> originals) {
         super(CONFIG_DEF, originals);
@@ -109,6 +115,7 @@ public final class WeaviateSinkConfig extends AbstractConfig {
         grpcUrl = getString(GRPC_URL_CONFIG);
         grpcSecured = getBoolean(GRPC_SECURED_CONFIG);
         documentIdStrategy = getClass(DOCUMENT_ID_STRATEGY_CONFIG);
+        documentIdFieldName = getString(DOCUMENT_ID_FIELD_CONFIG);
         vectorStrategy = getClass(VECTOR_STRATEGY_CONFIG);
         vectorFieldName = getString(VECTOR_FIELD_CONFIG);
     }
@@ -147,6 +154,10 @@ public final class WeaviateSinkConfig extends AbstractConfig {
 
     public Class<?> getDocumentIdStrategy() {
         return documentIdStrategy;
+    }
+
+    public String getDocumentIdFieldName() {
+        return documentIdFieldName;
     }
 
     public Class<?> getVectorStrategy() {
@@ -188,7 +199,5 @@ public final class WeaviateSinkConfig extends AbstractConfig {
         public String toString() {
             return canonicalValues.toString();
         }
-
-
     }
 }

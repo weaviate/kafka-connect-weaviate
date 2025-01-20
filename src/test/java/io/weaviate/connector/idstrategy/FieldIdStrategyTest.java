@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.weaviate.connector.converter;
+package io.weaviate.connector.idstrategy;
 
+import io.weaviate.connector.WeaviateSinkConfig;
+import io.weaviate.connector.converter.DataConverter;
 import org.apache.kafka.connect.data.SchemaAndValue;
 import org.apache.kafka.connect.json.JsonConverter;
 import org.apache.kafka.connect.json.JsonConverterConfig;
@@ -28,10 +30,10 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class DataConverterTest {
+class FieldIdStrategyTest {
 
     @Test
-    void structNoSchemaConvertToWeaviateProperties() throws IOException {
+    void getFieldId() throws IOException {
         DataConverter converter = new DataConverter();
         JsonConverter jsonConverter = new JsonConverter();
         jsonConverter.configure(new HashMap<>() {{
@@ -42,33 +44,18 @@ class DataConverterTest {
         String jsonContent = IOUtil.toString(converter.getClass().getResourceAsStream("/jsonData.json"));
         SchemaAndValue schemaAndValue = jsonConverter.toConnectData("test", jsonContent.getBytes(Charset.defaultCharset()));
 
-        Map<String, Object> properties = converter.convertToWeaviateProperties(schemaAndValue.schema(), schemaAndValue.value());
-
-        assertEquals("hello world", properties.get("text"));
-        assertEquals(123L, properties.get("int"));
-        assertEquals(1.23, properties.get("float"));
-        assertEquals(true, properties.get("boolean"));
-        assertEquals("[1.0, 2.0]", properties.get("vector").toString());
-    }
-
-
-    @Test
-    void structWithSchemaConvertToWeaviateProperties() throws IOException {
-        DataConverter converter = new DataConverter();
-        JsonConverter jsonConverter = new JsonConverter();
-        jsonConverter.configure(new HashMap<>() {{
-            put(JsonConverterConfig.TYPE_CONFIG, "value");
-            put(JsonConverterConfig.SCHEMAS_ENABLE_CONFIG, true);
+        WeaviateSinkConfig config = new WeaviateSinkConfig(WeaviateSinkConfig.CONFIG_DEF, new HashMap<>() {{
+            put(WeaviateSinkConfig.DOCUMENT_ID_FIELD_CONFIG, "text");
         }});
 
-        String jsonContent = IOUtil.toString(converter.getClass().getResourceAsStream("/jsonDataSchema.json"));
-        SchemaAndValue schemaAndValue = jsonConverter.toConnectData("test", jsonContent.getBytes(Charset.defaultCharset()));
-
         Map<String, Object> properties = converter.convertToWeaviateProperties(schemaAndValue.schema(), schemaAndValue.value());
 
-        assertEquals("hello world", properties.get("text"));
-        assertEquals(123L, properties.get("int"));
-        assertEquals(1.23, properties.get("float"));
-        assertEquals(true, properties.get("boolean"));
+        FieldIdStrategy fieldIdStrategy = new FieldIdStrategy();
+        fieldIdStrategy.configure(config);
+
+        String documentId = fieldIdStrategy.getDocumentId(null, properties);
+
+        assertEquals("5eb63bbb-e01e-3ed0-93cb-22bb8f5acdc3", documentId);
     }
+
 }

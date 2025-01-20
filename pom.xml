@@ -6,9 +6,10 @@
 
     <groupId>io.weaviate</groupId>
     <artifactId>kafka-connect-weaviate</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>${revision}</version>
 
     <properties>
+        <revision>1.0.0-SNAPSHOT</revision>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <maven.compiler.release>11</maven.compiler.release>

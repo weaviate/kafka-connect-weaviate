@@ -42,7 +42,7 @@ public class WeaviateSinkTask extends SinkTask {
 
     @Override
     public String version() {
-        return getClass().getPackage().getImplementationVersion();
+        return Version.getVersion();
     }
 
     @Override

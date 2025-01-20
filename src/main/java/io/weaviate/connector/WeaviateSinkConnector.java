@@ -57,8 +57,6 @@ public class WeaviateSinkConnector extends SinkConnector {
 
     @Override
     public String version() {
-        return getClass().getPackage().getImplementationVersion();
+        return Version.getVersion();
     }
-
-
 }

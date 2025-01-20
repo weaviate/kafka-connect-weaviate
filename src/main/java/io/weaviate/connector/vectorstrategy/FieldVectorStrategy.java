@@ -18,6 +18,8 @@ package io.weaviate.connector.vectorstrategy;
 import io.weaviate.connector.WeaviateSinkConfig;
 import org.apache.kafka.connect.sink.SinkRecord;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class FieldVectorStrategy implements VectorStrategy {
@@ -33,8 +35,32 @@ public class FieldVectorStrategy implements VectorStrategy {
 
     @Override
     public Float[] getDocumentVector(SinkRecord record, Map<String, Object> valueProperties) {
-        Float[] vector = valueProperties.get(fieldName) == null ? null : (Float[]) valueProperties.get(fieldName);
-        valueProperties.remove(fieldName);
-        return vector;
+        if (valueProperties.get(fieldName) == null) {
+            return null;
+        }
+
+        Object object = valueProperties.get(fieldName);
+        if (object instanceof Float[]) {
+            valueProperties.remove(fieldName);
+            return (Float[]) object;
+        }
+        if (object instanceof Iterable) {
+            List<Float> floatList = new ArrayList<>();
+            for (Object o : (Iterable<?>) object) {
+                if (o instanceof Float) {
+                    Float f = (Float) o;
+                    floatList.add(f);
+                } else if (o instanceof Double) {
+                    Double d = (Double) o;
+                    floatList.add(d.floatValue());
+                } else { // trying to cast anyway
+                    Float f = (Float) o;
+                    floatList.add(f);
+                }
+            }
+            valueProperties.remove(fieldName);
+            return floatList.toArray(new Float[0]);
+        }
+        throw new UnsupportedOperationException("Can't convert " + object + " to Float[]");
     }
 }
