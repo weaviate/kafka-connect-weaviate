@@ -1,6 +1,6 @@
 # Kafka Connect Weaviate Connector
 
-kafka-connect-weaviate is a [Kafka Connector](http://kafka.apache.org/documentation.html#connect) sink connector
+kafka-connect-weaviate is a [Kafka Sink Connector](http://kafka.apache.org/documentation.html#connect)
 for loading data to any Weaviate cluster.
 
 This is currently a Work In Progress connector, use it at your own risk.
