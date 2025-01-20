@@ -13,9 +13,13 @@
 **default**: false
 
 ### weaviate.auth.scheme        
-**description**: Authentication mechanism to use to connect to Weaviate, could be NONE, API_KEY or OIDC_CLIENT_CREDENTIALS 
-**possible values**: NONE, API_KEY, OIDC_CLIENT_CREDENTIALS
-**default**: NONE
+**description**: Authentication mechanism to use to connect to Weaviate, could be NONE, API_KEY or OIDC_CLIENT_CREDENTIALS  
+**default**: NONE  
+**valid values**:  
+- NONE  
+- API_KEY  
+- OIDC_CLIENT_CREDENTIALS  
+
 
 ### weaviate.api.key            
 **description**: User API Key if API Key authentication mechanism is used                                                  
@@ -32,7 +36,11 @@
 
 ### document.id.strategy        
 **description**: Java class returning the document ID for each record                                                      
-**default**: io.weaviate.connector.idstrategy.NoIdStrategy
+**default**: io.weaviate.connector.idstrategy.NoIdStrategy  
+**valid values**:  
+- io.weaviate.connector.idstrategy.NoIdStrategy
+- io.weaviate.connector.idstrategy.KafkaIdStrategy
+- io.weaviate.connector.idstrategy.FieldIdStrategy
 
 ### document.id.field.name      
 **description**: Field name containing the ID in Kafka                                                                     
@@ -40,7 +48,10 @@
 
 ### vector.strategy             
 **description**: Java class returning the document embedding for each record                                               
-**default**: io.weaviate.connector.vectorstrategy.NoVectorStrategy
+**default**: io.weaviate.connector.vectorstrategy.NoVectorStrategy  
+**valid values**:  
+- io.weaviate.connector.vectorstrategy.NoVectorStrategy
+- io.weaviate.connector.vectorstrategy.FieldVectorStrategy
 
 ### vector.field.name           
 **description**: Field name containing the embedding (used only for FieldVectorStrategy)                                   
