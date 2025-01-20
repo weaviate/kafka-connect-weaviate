@@ -3,8 +3,8 @@
 kafka-connect-weaviate is a [Kafka Sink Connector](http://kafka.apache.org/documentation.html#connect)
 for loading data to any Weaviate cluster.
 
-[!IMPORTANT]
-This is currently a Work In Progress connector, use it at your own risk.
+> [!IMPORTANT]
+> This is currently a Work In Progress connector, use it at your own risk.
 
 ## Example of configuration
 
