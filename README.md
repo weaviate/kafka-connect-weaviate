@@ -5,25 +5,9 @@ for loading data to any Weaviate cluster.
 
 This is currently a Work In Progress connector, use it at your own risk.
 
-## Configuration
-
-| Parameter                   | Description                                                                                               | Default value                                         |
-|-----------------------------|-----------------------------------------------------------------------------------------------------------|-------------------------------------------------------|
-| weaviate.connection.url     | "Weaviate connection URL, should be following the format `<scheme>://<host>:<port>`                       | http://localhost:8080                                 |
-| weaviate.grpc.url           | Weaviate GRPC connection URL                                                                              | localhost:50051                                       |
-| weaviate.grpc.secured       | Weaviate GRPC TLS secured connection, set to True to enable TLS encryption                                | false                                                 |
-| weaviate.auth.scheme        | Authentication mechanism to use to connect to Weaviate, could be NONE, API_KEY or OIDC_CLIENT_CREDENTIALS | NONE                                                  |
-| weaviate.api.key            | User API Key if API Key authentication mechanism is used                                                  |                                                       |
-| weaviate.oidc.client.secret | User OIDC client secret if OIDC authentication mechanism is used                                          |                                                       |
-| weaviate.oidc.scopes        | OIDC client scope if OIDC authentication mechanism is used                                                |                                                       |
-| collection.mapping          | Mapping between Kafka topic and Weaviate collection                                                       | ${topic}                                              |
-| document.id.strategy        | Java class returning the document ID for each record                                                      | io.weaviate.connector.idstrategy.NoIdStrategy         |
-| document.id.field.name      | Field name containing the ID in Kafka                                                                     | id                                                    |
-| vector.strategy             | Java class returning the document embedding for each record                                               | io.weaviate.connector.vectorstrategy.NoVectorStrategy |
-| vector.field.name           | Field name containing the embedding (used only for FieldVectorStrategy)                                   |                                                       |
-
-
 ## Example of configuration
+
+The definition of all parameters is available on [CONFIGURATION.md](./CONFIGURATION.md).
 
 **Simple configuration inserting a new object for each record in Kafka**
 ```json
