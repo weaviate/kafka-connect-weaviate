@@ -135,20 +135,20 @@
                     <documentationUrl>https://weaviate.io/developers/weaviate</documentationUrl>
                     <description>
                         The Weaviate connector allows moving data from Kafka to Weaviate. It writes data from a
-                        topic in Kafka to a collection in Weaviate and all data for a topic have the same type.
+                        topic in Kafka to a collection in Weaviate.
                         Weaviate uses state-of-the-art machine learning (ML) models to turn your data - text,
                         images, and more - into a searchable vector database.
                     </description>
                     <logo>logos/weaviate.jpg</logo>
 
-                    <supportProviderName>Dabz</supportProviderName>
+                    <supportProviderName>Weaviate</supportProviderName>
                     <supportSummary>Community support</supportSummary>
-                    <supportUrl>https://github.com/Dabz/kafka-connect-weaviate</supportUrl>
+                    <supportUrl>https://github.com/weaviate/kafka-connect-weaviate</supportUrl>
                     <supportLogo>logos/weaviate.jpg</supportLogo>
-                    <ownerUsername>Dabz</ownerUsername>
-                    <ownerType>user</ownerType>
-                    <ownerName>Damien Gasparina</ownerName>
-                    <ownerUrl>https://github.com/Dabz</ownerUrl>
+                    <ownerUsername>Weaviate</ownerUsername>
+                    <ownerType>organization</ownerType>
+                    <ownerName>Weaviate</ownerName>
+                    <ownerUrl>https://weaviate.io/</ownerUrl>
                     <ownerLogo>logos/weaviate.jpg</ownerLogo>
 
                     <dockerNamespace>confluentinc</dockerNamespace>
