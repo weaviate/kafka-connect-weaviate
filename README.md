@@ -8,12 +8,17 @@ for loading data to any Weaviate cluster.
 
 ## Features
 
-* Support streaming INSERT and UPSERT from a list of topics to multiple Weaviate collections
+* Support streaming INSERT, UPSERT and DELETE from a list of topics to multiple Weaviate collections
 * Support all structured format in Kafka (Avro, JSON, Protobuf)
 * Support Bring Your Own Vector if the embedding is generated outside of Weaviate
 * Support multiple tasks for higher throughput
 * Support at-least-once semantic
 * Tested with both Weaviate Cloud and self-managed Weaviate instance
+
+## Limitations
+
+* Does not create Weaviate collections automatically 
+* Does not support multiple vectors in Bring Your Own Vectors
 
 ## Upsert operation
 

@@ -23,6 +23,9 @@
 ### weaviate.headers
 **documentation**: Headers to provide while building Weaviate client (e.g. X-OpenAI-Api-Key)
 
+
+
+
 # Security parameters
 
 ### weaviate.api.key            
@@ -33,6 +36,8 @@
 
 ### weaviate.oidc.scopes        
 **documentation**: OIDC client scope if OIDC authentication mechanism is used                                                
+
+
 
 # Collection & schema parameters
 
@@ -68,6 +73,13 @@
 ### vector.field.name           
 **documentation**: Field name containing the embedding (used only for FieldVectorStrategy)                                   
 
+### delete.enabled
+**documentation**: Whether to treat null record values as deletes
+**default**: false
+
+
+
+
 # Retry parameters
 
 ### max.connection.retries
@@ -81,6 +93,9 @@
 ### retry.interval
 **documentation**: Interval between each retry  
 **default**: 2000
+
+
+
 
 # Performance parameters
 

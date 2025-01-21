@@ -123,6 +123,17 @@ public class WeaviateSinkTask extends SinkTask {
         }
         DataConverter dataConverter = new DataConverter();
         for (SinkRecord record : collection) {
+            if (record.value() == null) {
+                // Skipping tombstone if delete is not enabled
+                if (config.getDeleteEnabled()) {
+                    client.data().deleter()
+                            .withClassName(getCollectionName(record.topic()))
+                            .withID(documentIdStrategy.getDocumentId(record, null))
+                            .withConsistencyLevel(config.getConsistencyLevel().name())
+                            .run();
+                }
+                continue;
+            }
             Map<String, Object> properties = dataConverter.convertToWeaviateProperties(record.valueSchema(), record.value());
             objectsBatcher.withObject(WeaviateObject.builder()
                     .className(getCollectionName((record.topic())))

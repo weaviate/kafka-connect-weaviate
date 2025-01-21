@@ -43,8 +43,16 @@ class WeaviateSinkConfigTest {
             put(WeaviateSinkConfig.HEADERS_CONFIG, "X-OpenAI-Api-Key/XYZ"); // Invalid Header format
         }};
 
-        WeaviateSinkConfig config = new WeaviateSinkConfig(WeaviateSinkConfig.CONFIG_DEF, originals);
-        assertThrows(IllegalArgumentException.class, config::getHeaders);
+        assertThrows(IllegalArgumentException.class, () -> new WeaviateSinkConfig(WeaviateSinkConfig.CONFIG_DEF, originals));
+    }
+
+    @Test
+    void ensureDeleteEnabledEnforceKafkaId() {
+        HashMap<String, String> originals = new HashMap<>() {{
+            put(WeaviateSinkConfig.DELETE_ENABLED_CONFIG, "true");
+        }};
+
+        assertThrows(IllegalArgumentException.class, () -> new WeaviateSinkConfig(WeaviateSinkConfig.CONFIG_DEF, originals));
     }
 
 }

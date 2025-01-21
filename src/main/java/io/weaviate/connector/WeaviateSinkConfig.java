@@ -16,6 +16,7 @@
 package io.weaviate.connector;
 
 import io.weaviate.connector.idstrategy.IDStrategy;
+import io.weaviate.connector.idstrategy.KafkaIdStrategy;
 import io.weaviate.connector.vectorstrategy.VectorStrategy;
 import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
@@ -50,6 +51,7 @@ public final class WeaviateSinkConfig extends AbstractConfig {
     private final Integer retryInterval;
     private final Integer batchSize;
     private final Integer poolSize;
+    private final Boolean deleteEnabled;
 
     public enum AuthMechanism {
         NONE,
@@ -135,6 +137,10 @@ public final class WeaviateSinkConfig extends AbstractConfig {
     private static final String AWAIT_TERMINATION_MS_DOC = "Timeout for batch processing";
     private static final int AWAIT_TERMINATION_MS_DEFAULT = AWAIT_TERMINATION_MS;
 
+    public static final String DELETE_ENABLED_CONFIG = "delete.enabled";
+    private static final String DELETE_ENABLED_DOC = "Whether to treat null record values as deletes";
+    private static final boolean DELETE_ENABLED_DEFAULT = false;
+
     public static ConfigDef CONFIG_DEF = new ConfigDef()
             .define(CONNECTION_URL_CONFIG, ConfigDef.Type.STRING, CONNECTION_URL_DEFAULT, ConfigDef.Importance.HIGH, CONNECTION_URL_DOC)
             .define(GRPC_URL_CONFIG, ConfigDef.Type.STRING, GRPC_URL_DEFAULT, ConfigDef.Importance.HIGH, GRPC_URL_DOC)
@@ -144,8 +150,8 @@ public final class WeaviateSinkConfig extends AbstractConfig {
             .define(OIDC_CLIENT_SECRET_CONFIG, ConfigDef.Type.STRING, null, ConfigDef.Importance.HIGH, OIDC_CLIENT_SECRET_DOC)
             .define(OIDC_SCOPES_CONFIG, ConfigDef.Type.LIST, OIDC_SCOPES_DEFAULT, ConfigDef.Importance.HIGH, OIDC_SCOPES_DOC)
             .define(COLLECTION_MAPPING_CONFIG, ConfigDef.Type.STRING, COLLECTION_MAPPING_DEFAULT, ConfigDef.Importance.HIGH, COLLECTION_MAPPING_DOC)
-            .define(HEADERS_CONFIG, ConfigDef.Type.LIST, HEADERS_DEFAULT, ConfigDef.Importance.MEDIUM, HEADERS_DOC)
-            .define(CONSISTENCY_LEVEL_CONFIG, ConfigDef.Type.STRING, CONSISTENCY_LEVEL_DEFAULT, ConfigDef.Importance.LOW, CONSISTENCY_LEVEL_DOC)
+            .define(HEADERS_CONFIG, ConfigDef.Type.LIST, HEADERS_DEFAULT, new HeaderValidator(), ConfigDef.Importance.MEDIUM, HEADERS_DOC)
+            .define(CONSISTENCY_LEVEL_CONFIG, ConfigDef.Type.STRING, CONSISTENCY_LEVEL_DEFAULT, EnumValidator.in(ConsistencyLevel.values()), ConfigDef.Importance.LOW, CONSISTENCY_LEVEL_DOC)
             .define(DOCUMENT_ID_STRATEGY_CONFIG, ConfigDef.Type.CLASS, DOCUMENT_ID_STRATEGY_DEFAULT, ConfigDef.Importance.MEDIUM, DOCUMENT_ID_STRATEGY_DOC)
             .define(DOCUMENT_ID_FIELD_CONFIG, ConfigDef.Type.STRING, DOCUMENT_ID_FIELD_DEFAULT, ConfigDef.Importance.MEDIUM, DOCUMENT_ID_FIELD_DOC)
             .define(VECTOR_STRATEGY_CONFIG, ConfigDef.Type.CLASS, VECTOR_STRATEGY_DEFAULT, ConfigDef.Importance.MEDIUM, VECTOR_STRATEGY_DOC)
@@ -155,7 +161,8 @@ public final class WeaviateSinkConfig extends AbstractConfig {
             .define(RETRY_INTERVAL_CONFIG, ConfigDef.Type.INT, RETRY_INTERVAL_DEFAULT, ConfigDef.Importance.LOW, RETRY_INTERVAL_DOC)
             .define(BATCH_SIZE_CONFIG, ConfigDef.Type.INT, BATCH_SIZE_DEFAULT, ConfigDef.Importance.LOW, BATCH_SIZE_DOC)
             .define(POOL_SIZE_CONFIG, ConfigDef.Type.INT, POOL_SIZE_DEFAULT, ConfigDef.Importance.LOW, POOL_SIZE_DOC)
-            .define(AWAIT_TERMINATION_MS_CONFIG, ConfigDef.Type.INT, AWAIT_TERMINATION_MS_DEFAULT, ConfigDef.Importance.LOW, AWAIT_TERMINATION_MS_DOC);
+            .define(AWAIT_TERMINATION_MS_CONFIG, ConfigDef.Type.INT, AWAIT_TERMINATION_MS_DEFAULT, ConfigDef.Importance.LOW, AWAIT_TERMINATION_MS_DOC)
+            .define(DELETE_ENABLED_CONFIG, ConfigDef.Type.BOOLEAN, DELETE_ENABLED_DEFAULT, ConfigDef.Importance.LOW, DELETE_ENABLED_DOC);
 
     public WeaviateSinkConfig(ConfigDef definition, Map<?, ?> originals) {
         super(CONFIG_DEF, originals);
@@ -179,6 +186,10 @@ public final class WeaviateSinkConfig extends AbstractConfig {
         batchSize = getInt(BATCH_SIZE_CONFIG);
         poolSize = getInt(POOL_SIZE_CONFIG);
         awaitTerminationMs = getInt(AWAIT_TERMINATION_MS_CONFIG);
+        deleteEnabled = getBoolean(DELETE_ENABLED_CONFIG);
+        if (deleteEnabled && (!documentIdStrategy.equals(KafkaIdStrategy.class))) {
+            throw new IllegalArgumentException("If delete.enabled is true, document.id.strategy should be set to KafkaIdStrategy");
+        }
     }
 
     public String getConnectionUrl() {
@@ -261,6 +272,10 @@ public final class WeaviateSinkConfig extends AbstractConfig {
         return poolSize;
     }
 
+    public Boolean getDeleteEnabled() {
+        return deleteEnabled;
+    }
+
     public Map<String, String> getHeaders() {
         HashMap<String, String> headers = new HashMap<>();
         for (String header : rawHeaders) {
@@ -270,6 +285,22 @@ public final class WeaviateSinkConfig extends AbstractConfig {
             headers.put(header.split("=")[0], header.split("=")[1]);
         }
         return headers;
+    }
+
+    private static class HeaderValidator implements ConfigDef.Validator {
+        @SuppressWarnings("unchecked")
+        @Override
+        public void ensureValid(String name, Object value) {
+            if (!(value instanceof List)) {
+                throw new IllegalArgumentException("Invalid header value: " + value);
+            }
+            List<String> headers = (List<String>) value;
+            for (String header : headers) {
+                if (!header.contains("=")) {
+                    throw new IllegalArgumentException("Invalid header value: " + header);
+                }
+            }
+        }
     }
 
     private static class EnumValidator implements ConfigDef.Validator {
