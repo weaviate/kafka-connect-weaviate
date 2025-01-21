@@ -71,28 +71,28 @@
 # Retry parameters
 
 ### max.connection.retries
-**documentation**: Maximum number of retries to perform in case of connection issues
+**documentation**: Maximum number of retries to perform in case of connection issues  
 **default**: 3
 
 ### max.timeout.retries
+**documentation**: Maximum number of retries to perform in case of timeout  
 **default**: 3
-**documentation**: Maximum number of retries to perform in case of timeout
 
 ### retry.interval
-**documentation**: Interval between each retry
+**documentation**: Interval between each retry  
 **default**: 2000
 
 # Performance parameters
 
 ### batch.size
-**documentation**: Number of records per batch
+**documentation**: Number of records per batch  
 **default**: 100
 
 ### pool.size
-**documentation**: Number of pool to process batch
+**documentation**: Number of pool to process batch  
 **default**: 1
 
 ### await.termination.ms
-**documentation**: Timeout for batch processing
+**documentation**: Timeout for batch processing  
 **default**: 10000
 
