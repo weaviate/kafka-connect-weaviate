@@ -39,6 +39,7 @@ public class WeaviateSinkTask extends SinkTask {
     private IDStrategy documentIdStrategy;
     private VectorStrategy vectorStrategy;
     private ObjectsBatcher objectsBatcher;
+    private WeaviateSinkConfig config;
 
     @Override
     public String version() {
@@ -47,23 +48,25 @@ public class WeaviateSinkTask extends SinkTask {
 
     @Override
     public void start(Map<String, String> map) {
-        WeaviateSinkConfig config = new WeaviateSinkConfig(WeaviateSinkConfig.CONFIG_DEF, map);
-        collectionMappingRule = config.getCollectionMapping();
+        this.config = new WeaviateSinkConfig(WeaviateSinkConfig.CONFIG_DEF, map);
+        this.collectionMappingRule = config.getCollectionMapping();
         buildWeaviateClient(config);
         try {
-            documentIdStrategy = (IDStrategy) config.getDocumentIdStrategy().getDeclaredConstructor().newInstance();
-            documentIdStrategy.configure(config);
+            this.documentIdStrategy = (IDStrategy) config.getDocumentIdStrategy().getDeclaredConstructor().newInstance();
+            this.documentIdStrategy.configure(config);
         } catch (Exception e) {
             throw new RuntimeException("Can not instantiate DocumentIDStrategy class", e);
         }
 
         try {
-            vectorStrategy = (VectorStrategy) config.getVectorStrategy().getDeclaredConstructor().newInstance();
-            vectorStrategy.configure(config);
+            this.vectorStrategy = (VectorStrategy) config.getVectorStrategy().getDeclaredConstructor().newInstance();
+            this.vectorStrategy.configure(config);
         } catch (Exception e) {
             throw new RuntimeException("Can not instantiate VectorStrategy class", e);
         }
 
+        // Getting GRPC default registry to trigger Classloader issues if there
+        // are missing GRPC packages
         NameResolverRegistry defaultRegistry = NameResolverRegistry.getDefaultRegistry();
         defaultRegistry.getDefaultScheme();
     }
@@ -92,7 +95,8 @@ public class WeaviateSinkTask extends SinkTask {
     private static Config getConfig(WeaviateSinkConfig config) {
         String scheme = config.getConnectionUrl().split("://")[0];
         String hostAndPort = config.getConnectionUrl().split("://")[1];
-        Config weaviateConfig = new Config(scheme, hostAndPort);
+        Map<String, String> headers = config.getHeaders();
+        Config weaviateConfig = new Config(scheme, hostAndPort, headers);
         if (config.getGrpcUrl() != null && !config.getGrpcUrl().isEmpty()) {
             weaviateConfig.setGRPCHost(config.getGrpcUrl());
             weaviateConfig.setGRPCSecured(config.getGrpcSecured());
@@ -103,7 +107,19 @@ public class WeaviateSinkTask extends SinkTask {
     @Override
     public void put(Collection<SinkRecord> collection) {
         if (objectsBatcher == null) {
-            objectsBatcher = client.batch().objectsAutoBatcher();
+            objectsBatcher = client.batch().objectsAutoBatcher(
+                    ObjectsBatcher.BatchRetriesConfig.builder()
+                            .maxConnectionRetries(config.getMaxConnectionRetries())
+                            .maxTimeoutRetries(config.getMaxTimeoutRetries())
+                            .retriesIntervalMs(config.getRetryInterval())
+                            .build(),
+                    ObjectsBatcher.AutoBatchConfig.builder()
+                            .batchSize(config.getBatchSize())
+                            .poolSize(config.getPoolSize())
+                            .awaitTerminationMs(config.getAwaitTerminationMs())
+                            .build()
+            );
+            objectsBatcher.withConsistencyLevel(config.getConsistencyLevel().name());
         }
         DataConverter dataConverter = new DataConverter();
         for (SinkRecord record : collection) {
@@ -115,7 +131,7 @@ public class WeaviateSinkTask extends SinkTask {
                     .vector(vectorStrategy.getDocumentVector(record, properties))
                     .build());
         }
-        objectsBatcher.flush();
+        objectsBatcher.flush(); // Flushing to ease error handling
     }
 
     public String getCollectionName(String topic) {

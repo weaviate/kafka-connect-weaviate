@@ -6,6 +6,37 @@ for loading data to any Weaviate cluster.
 > [!IMPORTANT]
 > This is currently a Work In Progress connector, use it at your own risk.
 
+## Features
+
+* Support streaming INSERT and UPSERT from a list of topics to multiple Weaviate collections
+* Support all structured format in Kafka (Avro, JSON, Protobuf)
+* Support Bring Your Own Vector if the embedding is generated outside of Weaviate
+* Support multiple tasks for higher throughput
+* Support at-least-once semantic
+* Tested with both Weaviate Cloud and self-managed Weaviate instance
+
+## Upsert operation
+
+Upsert is done by specifying the relevant UUID for each document. 
+The UUID can be configured by specifying the `document.id.strategy` configuration.
+By default, the `io.weaviate.connector.idstrategy.NoIdStrategy` is used, 
+
+The availables `document.id.strategy` are:
+
+- `io.weaviate.connector.idstrategy.NoIdStrategy` - **default** - generates a new UUID for each record, thus always inserting a new record in Weaviate for each Kafka record.
+- `io.weaviate.connector.idstrategy.KafkaIdStrategy` - generates a UUID based on the key of the Kafka message
+- `io.weaviate.connector.idstrategy.FieldIdStrategy` - generates a UUID based on a field of the Kafka record payload, the field name can be specified by configuring `document.id.field.name` 
+
+## Bring Your Own Vectors
+
+By default, the embedding of each record will be compute by Weaviate by levearing the collection vectorizers.
+If the embedding is already available or computed outside of Weaviate, you can configure the `vector.strategy` to change this behavior.
+
+The availables `vector.strategy` are:
+
+- `io.weaviate.connector.vectorstrategy.NoVectorStrategy` - **default** - will rely on collection vectorizier to generate embedding in Weaviate
+- `io.weaviate.connector.vectorstrategy.FieldVectorStrategy` - Embedding available in a field of the Kafka record, the field name can be specified by configuring `vector.field.name`
+
 ## Example of configuration
 
 The definition of all parameters is available on [CONFIGURATION.md](./CONFIGURATION.md).

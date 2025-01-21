@@ -23,6 +23,11 @@ import org.apache.kafka.common.config.ConfigException;
 
 import java.util.*;
 
+import static io.weaviate.client.v1.async.batch.api.ObjectsBatcher.AutoBatchConfig.BATCH_SIZE;
+import static io.weaviate.client.v1.async.batch.api.ObjectsBatcher.BatchRetriesConfig.*;
+import static io.weaviate.client.v1.batch.api.ObjectsBatcher.AutoBatchConfig.AWAIT_TERMINATION_MS;
+import static io.weaviate.client.v1.batch.api.ObjectsBatcher.AutoBatchConfig.POOL_SIZE;
+
 public final class WeaviateSinkConfig extends AbstractConfig {
 
     private final String connectionUrl;
@@ -37,6 +42,14 @@ public final class WeaviateSinkConfig extends AbstractConfig {
     private final Class<?> vectorStrategy;
     private final String vectorFieldName;
     private final String documentIdFieldName;
+    private final List<String> rawHeaders;
+    private final ConsistencyLevel consistencyLevel;
+    private final Integer awaitTerminationMs;
+    private final Integer maxConnectionRetries;
+    private final Integer maxTimeoutRetries;
+    private final Integer retryInterval;
+    private final Integer batchSize;
+    private final Integer poolSize;
 
     public enum AuthMechanism {
         NONE,
@@ -74,6 +87,10 @@ public final class WeaviateSinkConfig extends AbstractConfig {
     private static final String COLLECTION_MAPPING_DOC = "Mapping between Kafka topic and Weaviate collection";
     private static final String COLLECTION_MAPPING_DEFAULT = "${topic}";
 
+    public static final String HEADERS_CONFIG = "weaviate.headers";
+    private static final String HEADERS_DOC = "Headers to provide while building Weaviate client (e.g. X-OpenAI-Api-Key)";
+    private static final String HEADERS_DEFAULT = "";
+
     public static final String DOCUMENT_ID_STRATEGY_CONFIG = "document.id.strategy";
     private static final String DOCUMENT_ID_STRATEGY_DOC = "Java class returning the document ID for each record";
     private static final Class<? extends IDStrategy> DOCUMENT_ID_STRATEGY_DEFAULT = io.weaviate.connector.idstrategy.NoIdStrategy.class;
@@ -90,6 +107,34 @@ public final class WeaviateSinkConfig extends AbstractConfig {
     private static final String VECTOR_FIELD_DOC = "Field name containing the embedding";
     private static final String VECTOR_FIELD_DEFAULT = "vector";
 
+    public static final String CONSISTENCY_LEVEL_CONFIG = "consistency.level";
+    private static final String CONSISTENCY_LEVEL_DOC = "Consistency level to use while inserting objects";
+    private static final String CONSISTENCY_LEVEL_DEFAULT = ConsistencyLevel.QUORUM.name();
+
+    public static final String MAX_TIMEOUT_RETRIES_CONFIG = "max.timeout.retries";
+    private static final String MAX_TIMEOUT_RETRIES_DOC = "Maximum number of retries to perform in case of timeout";
+    private static final int MAX_TIMEOUT_RETRIES_DEFAULT = MAX_TIMEOUT_RETRIES;
+
+    public static final String MAX_CONNECTION_RETRIES_CONFIG = "max.connection.retries";
+    private static final String MAX_CONNECTION_RETRIES_DOC = "Maximum number of retries to perform in case of connection issues";
+    private static final int MAX_CONNECTION_RETRIES_DEFAULT = MAX_CONNECTION_RETRIES;
+
+    public static final String RETRY_INTERVAL_CONFIG = "retry.interval";
+    private static final String RETRY_INTERVAL_DOC = "Interval between each retry";
+    private static final int RETRY_INTERVAL_DEFAULT = RETRIES_INTERVAL;
+
+    public static final String BATCH_SIZE_CONFIG = "batch.size";
+    private static final String BATCH_SIZE_DOC = "Number of records per batch";
+    private static final int BATCH_SIZE_DEFAULT = BATCH_SIZE;
+
+    public static final String POOL_SIZE_CONFIG = "pool.size";
+    private static final String POOL_SIZE_DOC = "Number of pool to process batch";
+    private static final int POOL_SIZE_DEFAULT = POOL_SIZE;
+
+    public static final String AWAIT_TERMINATION_MS_CONFIG = "await.termination.ms";
+    private static final String AWAIT_TERMINATION_MS_DOC = "Timeout for batch processing";
+    private static final int AWAIT_TERMINATION_MS_DEFAULT = AWAIT_TERMINATION_MS;
+
     public static ConfigDef CONFIG_DEF = new ConfigDef()
             .define(CONNECTION_URL_CONFIG, ConfigDef.Type.STRING, CONNECTION_URL_DEFAULT, ConfigDef.Importance.HIGH, CONNECTION_URL_DOC)
             .define(GRPC_URL_CONFIG, ConfigDef.Type.STRING, GRPC_URL_DEFAULT, ConfigDef.Importance.HIGH, GRPC_URL_DOC)
@@ -99,10 +144,18 @@ public final class WeaviateSinkConfig extends AbstractConfig {
             .define(OIDC_CLIENT_SECRET_CONFIG, ConfigDef.Type.STRING, null, ConfigDef.Importance.HIGH, OIDC_CLIENT_SECRET_DOC)
             .define(OIDC_SCOPES_CONFIG, ConfigDef.Type.LIST, OIDC_SCOPES_DEFAULT, ConfigDef.Importance.HIGH, OIDC_SCOPES_DOC)
             .define(COLLECTION_MAPPING_CONFIG, ConfigDef.Type.STRING, COLLECTION_MAPPING_DEFAULT, ConfigDef.Importance.HIGH, COLLECTION_MAPPING_DOC)
+            .define(HEADERS_CONFIG, ConfigDef.Type.LIST, HEADERS_DEFAULT, ConfigDef.Importance.MEDIUM, HEADERS_DOC)
+            .define(CONSISTENCY_LEVEL_CONFIG, ConfigDef.Type.STRING, CONSISTENCY_LEVEL_DEFAULT, ConfigDef.Importance.LOW, CONSISTENCY_LEVEL_DOC)
             .define(DOCUMENT_ID_STRATEGY_CONFIG, ConfigDef.Type.CLASS, DOCUMENT_ID_STRATEGY_DEFAULT, ConfigDef.Importance.MEDIUM, DOCUMENT_ID_STRATEGY_DOC)
             .define(DOCUMENT_ID_FIELD_CONFIG, ConfigDef.Type.STRING, DOCUMENT_ID_FIELD_DEFAULT, ConfigDef.Importance.MEDIUM, DOCUMENT_ID_FIELD_DOC)
             .define(VECTOR_STRATEGY_CONFIG, ConfigDef.Type.CLASS, VECTOR_STRATEGY_DEFAULT, ConfigDef.Importance.MEDIUM, VECTOR_STRATEGY_DOC)
-            .define(VECTOR_FIELD_CONFIG, ConfigDef.Type.STRING, VECTOR_FIELD_DEFAULT, ConfigDef.Importance.MEDIUM, VECTOR_FIELD_DOC);
+            .define(VECTOR_FIELD_CONFIG, ConfigDef.Type.STRING, VECTOR_FIELD_DEFAULT, ConfigDef.Importance.MEDIUM, VECTOR_FIELD_DOC)
+            .define(MAX_CONNECTION_RETRIES_CONFIG, ConfigDef.Type.INT, MAX_CONNECTION_RETRIES_DEFAULT, ConfigDef.Importance.LOW, MAX_CONNECTION_RETRIES_DOC)
+            .define(MAX_TIMEOUT_RETRIES_CONFIG, ConfigDef.Type.INT, MAX_TIMEOUT_RETRIES_DEFAULT, ConfigDef.Importance.LOW, MAX_TIMEOUT_RETRIES_DOC)
+            .define(RETRY_INTERVAL_CONFIG, ConfigDef.Type.INT, RETRY_INTERVAL_DEFAULT, ConfigDef.Importance.LOW, RETRY_INTERVAL_DOC)
+            .define(BATCH_SIZE_CONFIG, ConfigDef.Type.INT, BATCH_SIZE_DEFAULT, ConfigDef.Importance.LOW, BATCH_SIZE_DOC)
+            .define(POOL_SIZE_CONFIG, ConfigDef.Type.INT, POOL_SIZE_DEFAULT, ConfigDef.Importance.LOW, POOL_SIZE_DOC)
+            .define(AWAIT_TERMINATION_MS_CONFIG, ConfigDef.Type.INT, AWAIT_TERMINATION_MS_DEFAULT, ConfigDef.Importance.LOW, AWAIT_TERMINATION_MS_DOC);
 
     public WeaviateSinkConfig(ConfigDef definition, Map<?, ?> originals) {
         super(CONFIG_DEF, originals);
@@ -112,12 +165,20 @@ public final class WeaviateSinkConfig extends AbstractConfig {
         oidcClientSecret = getString(OIDC_CLIENT_SECRET_CONFIG);
         oidcScopes = getList(OIDC_SCOPES_CONFIG);
         collectionMapping = getString(COLLECTION_MAPPING_CONFIG);
+        rawHeaders = getList(HEADERS_CONFIG);
         grpcUrl = getString(GRPC_URL_CONFIG);
         grpcSecured = getBoolean(GRPC_SECURED_CONFIG);
         documentIdStrategy = getClass(DOCUMENT_ID_STRATEGY_CONFIG);
         documentIdFieldName = getString(DOCUMENT_ID_FIELD_CONFIG);
         vectorStrategy = getClass(VECTOR_STRATEGY_CONFIG);
         vectorFieldName = getString(VECTOR_FIELD_CONFIG);
+        consistencyLevel = ConsistencyLevel.valueOf(getString(CONSISTENCY_LEVEL_CONFIG));
+        maxConnectionRetries = getInt(MAX_CONNECTION_RETRIES_CONFIG);
+        maxTimeoutRetries = getInt(MAX_TIMEOUT_RETRIES_CONFIG);
+        retryInterval = getInt(RETRY_INTERVAL_CONFIG);
+        batchSize = getInt(BATCH_SIZE_CONFIG);
+        poolSize = getInt(POOL_SIZE_CONFIG);
+        awaitTerminationMs = getInt(AWAIT_TERMINATION_MS_CONFIG);
     }
 
     public String getConnectionUrl() {
@@ -168,6 +229,49 @@ public final class WeaviateSinkConfig extends AbstractConfig {
         return vectorFieldName;
     }
 
+    public List<String> getRawHeaders() {
+        return rawHeaders;
+    }
+
+    public ConsistencyLevel getConsistencyLevel() {
+        return consistencyLevel;
+    }
+
+    public Integer getAwaitTerminationMs() {
+        return awaitTerminationMs;
+    }
+
+    public Integer getMaxConnectionRetries() {
+        return maxConnectionRetries;
+    }
+
+    public Integer getMaxTimeoutRetries() {
+        return maxTimeoutRetries;
+    }
+
+    public Integer getRetryInterval() {
+        return retryInterval;
+    }
+
+    public Integer getBatchSize() {
+        return batchSize;
+    }
+
+    public Integer getPoolSize() {
+        return poolSize;
+    }
+
+    public Map<String, String> getHeaders() {
+        HashMap<String, String> headers = new HashMap<>();
+        for (String header : rawHeaders) {
+            if (!header.contains("=")) {
+                throw new IllegalArgumentException("Invalid header: " + header);
+            }
+            headers.put(header.split("=")[0], header.split("=")[1]);
+        }
+        return headers;
+    }
+
     private static class EnumValidator implements ConfigDef.Validator {
         private final List<String> canonicalValues;
         private final Set<String> validValues;
@@ -200,4 +304,11 @@ public final class WeaviateSinkConfig extends AbstractConfig {
             return canonicalValues.toString();
         }
     }
+
+    public enum ConsistencyLevel {
+        ALL,
+        ONE,
+        QUORUM,
+    }
+
 }
