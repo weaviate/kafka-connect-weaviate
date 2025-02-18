@@ -177,6 +177,10 @@
                         <requirement>Weaviate 1.28.x or greater</requirement>
                     </requirements>
 
+                    <excludes>
+                        <exclude>io.netty:*</exclude>
+                    </excludes>
+
                     <deliveryGuarantee>
                         <deliveryGuarantee>atLeastOnce</deliveryGuarantee>
                     </deliveryGuarantee>
