@@ -13,7 +13,9 @@ for loading data to any Weaviate cluster.
 * Support Bring Your Own Vector if the embedding is generated outside of Weaviate
 * Support multiple tasks for higher throughput
 * Support at-least-once semantic
+* Can be deployed on Confluent Cloud as a Custom Connector
 * Tested with both Weaviate Cloud and self-managed Weaviate instance
+* Tested with both Confluent Platform 7.8 and Confluent Cloud
 
 ## Limitations
 
@@ -110,3 +112,12 @@ python examples/create_collection.py weaviate_test
 curl -i -X PUT localhost:8083/connectors/weaviate/config -H 'Content-Type:application/json' --data @examples/weaviate-upsert-sink.json
 echo '{"string": "Hello World", "number": 1.23, "id": "test" }' |  docker-compose exec -T kafka kafka-console-producer --bootstrap-server localhost:9092 --topic test
 ```
+
+# Version interoperability
+
+| Component | Required versions  |
+| --------- | ------------------ | 
+| **Weaviate**  | 1.28x or greater                  |
+| **Java**  | Java 11 or greater                    |
+| **Kafka Connect**  | Built & tested for Kafka 3.8 |
+| 
