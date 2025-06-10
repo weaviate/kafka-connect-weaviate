@@ -16,7 +16,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <kafka.version>3.9.0</kafka.version>
         <kafka-connect-maven-plugin.version>0.12.0</kafka-connect-maven-plugin.version>
-        <weaviate.version>5.0.1</weaviate.version>
+        <weaviate.version>5.2.1</weaviate.version>
         <junit-jupiter-engine.version>5.9.1</junit-jupiter-engine.version>
         <commons-io.version>2.18.0</commons-io.version>
         <maven-assembly-plugin.version>3.7.1</maven-assembly-plugin.version>
