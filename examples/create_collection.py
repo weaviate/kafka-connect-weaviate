@@ -16,8 +16,8 @@ with weaviate.connect_to_local() as client:
             name=collection_name,
             properties=[
                 Property(name="string", data_type=DataType.TEXT),
-                Property(name="number", data_type=DataType.NUMBER),
+                Property(name="number", data_type=DataType.NUMBER)
                 ],
-            vectorizer_config=Configure.Vectorizer.text2vec_ollama(model="nomic-embed-text", api_endpoint="http://host.docker.internal:11434")
+            vectorizer_config=Configure.Vectorizer.none()
             )
 
